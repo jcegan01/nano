@@ -14,10 +14,6 @@ lapply(c("tidyverse", "reshape2", "plyr"), require, character.only = TRUE)
 setwd("C:/Users/xadmin/projects/nano")
 
 
-#############
-### read ###
-###########
-
 ############################## CREATE TEXT FILES ##############################
 
 
