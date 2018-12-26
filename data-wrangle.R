@@ -4,11 +4,12 @@
 options(stringsAsFactors=FALSE)
 
 #load packages
-packages <- c("stringr","data.table","tm","SnowballC","plyr","devtools","ggplot2","wordcloud","RColorBrewer","cluster","fpc","class","RWeka")
+packages <- c("stringr","data.table","tm","SnowballC","plyr","devtools","ggplot2","wordcloud","RColorBrewer","cluster","fpc","class","RWeka","Hmisc")
+install.packages(packages)
 lapply(packages, require, character.only = TRUE)
 
 #set working directory
-setwd("C:\\Users\\u4eprjcc\\Documents\\SynBio\\")
+setwd("C:/Users/xadmin/projects/nano")
 
 
 
@@ -16,7 +17,7 @@ setwd("C:\\Users\\u4eprjcc\\Documents\\SynBio\\")
 
 ############################## CREATE OUTPUT TABLE ##############################
 
-dir_path <- "02_Articles\\txt\\"
+dir_path <- "txts\\"
 filenames <- list.files(dir_path,pattern = ".txt",full.names=FALSE)
 
 #initialize output table
@@ -24,34 +25,35 @@ numrows <- length(filenames)
 res <- data.frame(matrix(NA,numrows,0))
 
 for (f in c(1:numrows)){ 
-  
+ 
   res[f,"File_Name"] <- unlist(strsplit(filenames[f], "/"))
   #gsub("(?<=\\s)i+", " ", "akui i ii", perl=T)
-  res[f,"Author_Name"] <- gsub("\\s.*","", filenames[f])  
-  res[f,"Author_Name"] <- gsub(",.*","", res[f,"Author_Name"])
-  
-  res[f,"Title_Name"] <- strsplit(filenames[f],' - ',fixed=TRUE)[[1]][3] 
+  res[f,"Author_Name"] <- capitalize(tolower(strsplit(filenames[f],'_',fixed=TRUE)[[1]][1]))
+  res[f,"Year"] <- strsplit(filenames[f],'_',fixed=TRUE)[[1]][2]   
+  res[f,"Title_Name"] <- strsplit(filenames[f],'_',fixed=TRUE)[[1]][3] 
   res[f,"Title_Name"] <- gsub("\\.txt","", res[f,"Title_Name"])
+  
   title_wordlist <-strsplit(res[f,"Title_Name"], "\\W+", perl=TRUE)
   title_wordvector <- unlist(title_wordlist)
+
   res[f,"Title_Keyword1"] <- tolower(title_wordvector[nchar(title_wordvector)==max(nchar(title_wordvector))][[1]])
-  res[f,"Title_Keyword2"] <- tolower(title_wordvector[nchar(title_wordvector)==max(nchar(title_wordvector)[nchar(title_wordvector)!=max(nchar(title_wordvector))])][[1]])
-  
-  #grab year
-  year <- as.character(1970:2017) 
-  
-  reflist <-strsplit(res[f,"File_Name"], "\\W+", perl=TRUE)
-  refvector <- unlist(reflist)
-  for (n in 1:1000){
-    for (y in 1:length(year)){
-      if (refvector[n] == year[y]){
-        res[f,"Publication_Year"] <- refvector[n]
-        break
-      }}
-    if (refvector[n] == year[y]){break}
-    if (n == length(refvector)){break}      
+  if (length(title_wordvector[nchar(title_wordvector)==max(nchar(title_wordvector))]) > 1){
+    res[f,"Title_Keyword2"] <- tolower(title_wordvector[nchar(title_wordvector)==max(nchar(title_wordvector))][[2]])
+  } else if (length(title_wordvector) == 1) {res[f,"Title_Keyword2"] <- ""
+  } else {res[f,"Title_Keyword2"] <- tolower(title_wordvector[nchar(title_wordvector)==max(nchar(title_wordvector)[nchar(title_wordvector)!=max(nchar(title_wordvector))])][[1]])
   }
-}
+ }  
+
+head(res)
+tail(res)
+
+
+write.table(res, file = paste("nano.csv"),sep=",",col.names = TRUE,append=FALSE,row.names=FALSE)
+
+
+
+
+
 
 #create unique ids
 res$ID <- paste(res$Author_Name,res$Publication_Year,res$Title_Keyword1,res$Title_Keyword2,sep="_")
